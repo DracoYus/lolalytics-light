@@ -11,6 +11,7 @@
 
 (function () {
   "use strict";
+
   const waitPageLoad = async () => {
     while (true) {
       // Before processing runes, detect whether rune related elements are loaded
@@ -47,7 +48,7 @@
       const resizePanelPatternList = ["PanelLazy_panel"];
       // toggle summoner skills
       const clickElementPatternList = ["SetSingle_togglespells"];
-      
+
       const removeParentByContentList = [];
 
       // Change background image to plain gray #111111
@@ -99,43 +100,45 @@
             div.parentNode.style.visibility = "hidden"; // Hide all runes
         }
         //break;
-
-        for (const removePanelPattern of removePanelPatternList) {
-          const divs = [
-            ...document.querySelectorAll(`[class^=${removePanelPattern}]`),
-          ];
-          removeDivs(divs);
-        }
-
-        for (const resizePanelPattern of resizePanelPatternList) {
-          const divs = [
-            ...document.querySelectorAll(`[class^=${resizePanelPattern}]`),
-          ];
-          resizeDivs(divs);
-        }
-
-        for (const clickElementPattern of clickElementPatternList) {
-          const divs = [
-            ...document.querySelectorAll(`[class^=${clickElementPattern}]`),
-          ];
-          clickDivs(divs);
-        }
-
-        for (const removeParentByContent of removeParentByContentList) {
-          const divs = [
-            ...document.querySelectorAll(`:contains(${removeParentByContent}`),
-          ];
-          removeParentDivs(divs);
-        }
-
-        removeUselessDiv();
       }
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000)
-      );
+
+      for (const removePanelPattern of removePanelPatternList) {
+        const divs = [
+          ...document.querySelectorAll(`[class^=${removePanelPattern}]`),
+        ];
+        removeDivs(divs);
+      }
+
+      for (const resizePanelPattern of resizePanelPatternList) {
+        const divs = [
+          ...document.querySelectorAll(`[class^=${resizePanelPattern}]`),
+        ];
+        resizeDivs(divs);
+      }
+
+      for (const clickElementPattern of clickElementPatternList) {
+        const divs = [
+          ...document.querySelectorAll(`[class^=${clickElementPattern}]`),
+        ];
+        clickDivs(divs);
+      }
+
+      for (const removeParentByContent of removeParentByContentList) {
+        const divs = [
+          ...document.querySelectorAll(`:contains(${removeParentByContent}`),
+        ];
+        removeParentDivs(divs);
+      }
+
+      removeUselessDiv();
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   };
-  waitPageLoad();
+  var observer = new MutationObserver(waitPageLoad);
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 
   function removeDivs(divs) {
     for (const div of divs) {
