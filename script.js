@@ -11,6 +11,7 @@
 
 (function () {
   "use strict";
+  const HighLightColor = ["#22863A", "#DBAB09", "#D73A49"];
 
   const waitPageLoad = async () => {
     while (true) {
@@ -131,6 +132,8 @@
       }
 
       removeUselessDiv();
+      highLightSummonerSkill();
+
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   };
@@ -202,5 +205,48 @@
         div.parentNode.parentNode.style.display = "none";
       }
     });
+  }
+
+  function highLightSummonerSkill() {
+    let SummonerSkillPattern = "[class^=PanelHeading_title]";
+    let text = "Summoner Spells";
+    let div = elementWithTextIsLoaded(SummonerSkillPattern, text);
+    if (div) {
+      let summonerSkillDivs = div.parentNode.nextSibling.firstChild;
+      let baseWinRate = parseFloat(
+        summonerSkillDivs.children[0].children[1].innerHTML
+      );
+      const divsArray = Array.from(summonerSkillDivs.childNodes);
+      let FilterAndSortedDivs = divsArray
+        .filter((SummonerSkill) => {
+          return (
+            parseFloat(SummonerSkill.children[1].innerHTML) > baseWinRate &&
+            parseFloat(SummonerSkill.children[2].innerHTML) > 5
+          );
+        })
+        .sort(
+          (a, b) =>
+            // balance the winrate and pick rate 
+            parseFloat(b.children[1].innerHTML) +
+            parseFloat(b.children[2].innerHTML) / 20 -
+            parseFloat(a.children[1].innerHTML) -
+            parseFloat(a.children[2].innerHTML) / 20
+        );
+      for (let i = 0; i < HighLightColor.length; i++) {
+        FilterAndSortedDivs[i].style.border = `2px solid ${HighLightColor[i]}`;
+      }
+      // FilterAndSortedDivs.forEach((Div) => {
+      //   Div.style.border = "2px solid #ff9b00";
+      // });
+    }
+  }
+  function elementWithTextIsLoaded(selectorPattern, text) {
+    let divs = document.querySelectorAll(selectorPattern);
+    for (let i = 0; i < divs.length; i++) {
+      if (divs[i].textContent.includes(text)) {
+        return divs[i];
+      }
+    }
+    return null;
   }
 })();
