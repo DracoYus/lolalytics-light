@@ -54,6 +54,7 @@
   ];
   const runeRowsPattern = "[class^=RuneRow_runerow]";
   const runeStatsPattern = "[class^=RuneStatPanel_runetype]";
+  const skillTablePattern = "[class^=SkillsTable_data]";
 
   const waitPageLoad = async () => {
     while (true) {
@@ -70,7 +71,11 @@
         ...document.querySelectorAll("[class^=Background_back]"),
       ];
 
-      const runeRows = [...document.querySelectorAll(runeRowsPattern),...document.querySelectorAll(runeStatsPattern)];
+      const runeRows = [
+        ...document.querySelectorAll(runeRowsPattern),
+        ...document.querySelectorAll(runeStatsPattern),
+      ];
+      const skillRows = [...document.querySelectorAll(skillTablePattern)];
 
       if (backgroundImagePanel.length > 0)
         backgroundImagePanel[0].style.backgroundImage =
@@ -98,6 +103,9 @@
 
       for (let runeRow of runeRows) {
         highLightRune(runeRow);
+      }
+      for (let skillRow of skillRows) {
+        highLightSkill(skillRow);
       }
 
       for (const removePanelPattern of removePanelPatternList) {
@@ -131,7 +139,7 @@
       removeUselessDiv();
 
       for (let hightLightElement of highLightList) {
-        highLight(...hightLightElement);
+        highLightItem(...hightLightElement);
       }
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -207,7 +215,7 @@
     });
   }
 
-  function highLight(Pattern, text) {
+  function highLightItem(Pattern, text) {
     let div = elementWithTextIsLoaded(Pattern, text);
     if (div) {
       let highLightParentDivs = div.parentNode.nextSibling.firstChild;
@@ -265,12 +273,8 @@
     let FirstWinRate;
     let FirstPickRate;
     if (FilterAndSortedDivs[0]) {
-      FirstWinRate = parseFloat(
-        FilterAndSortedDivs[0].children[1].innerHTML
-      );
-      FirstPickRate = parseFloat(
-        FilterAndSortedDivs[0].children[2].innerHTML
-      );
+      FirstWinRate = parseFloat(FilterAndSortedDivs[0].children[1].innerHTML);
+      FirstPickRate = parseFloat(FilterAndSortedDivs[0].children[2].innerHTML);
     }
     for (
       let i = 0;
@@ -289,4 +293,45 @@
       }
     }
   }
+
+  function highLightSkill(div) {
+    const divsArray = Array.from(div.children);
+    let FilterAndSortedDivs = divsArray
+      .filter((highLightDiv) => {
+        if (highLightDiv.children[2].children[0])
+          return parseFloat(highLightDiv.children[2].children[0].innerHTML) > 1;
+        else return false;
+      })
+      .sort(
+        (a, b) =>
+          // balance the winrate and pick rate
+          parseFloat(b.children[1].children[0].innerHTML) +
+          Math.log(parseFloat(b.children[2].children[0].innerHTML)) -
+          parseFloat(a.children[1].children[0].innerHTML) -
+          Math.log(parseFloat(a.children[2].children[0].innerHTML))
+      );
+    let FirstWinRate;
+    let FirstPickRate;
+    if (FilterAndSortedDivs[0]) {
+      FirstWinRate = parseFloat(FilterAndSortedDivs[0].children[1].children[0].innerHTML);
+      FirstPickRate = parseFloat(FilterAndSortedDivs[0].children[2].children[0].innerHTML);
+    }
+    for (
+      let i = 0;
+      i < Math.min(HighLightColor.length, FilterAndSortedDivs.length);
+      i++
+    ) {
+      if (
+        parseFloat(FilterAndSortedDivs[i].children[1].children[0].innerHTML) >=
+          FirstWinRate ||
+        parseFloat(FilterAndSortedDivs[i].children[2].children[0].innerHTML) >=
+          FirstPickRate
+      ) {
+        FilterAndSortedDivs[i].style.borderRadius = "2px";
+        FilterAndSortedDivs[i].style.border = `2px solid ${HighLightColor[i]}`;
+        FilterAndSortedDivs[i].style["box-sizing"] = "border-box";
+      }
+    }
+  }
+    
 })();
