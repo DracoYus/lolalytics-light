@@ -11,7 +11,47 @@
 
 (function () {
   "use strict";
+  // green, orange, red
   const HighLightColor = ["#22863A", "#DBAB09", "#D73A49"];
+  // some elements I don't like
+  const removePanelPatternList = [
+    "ChampionHeader_medium__",
+    "ChampionHeader_header__",
+    "Summary_full__",
+    "HLeaderboard_leaderboard",
+    "GraphLegend_wrapper",
+    "Graphs_medium3",
+    "Champion_mythic",
+    "PanelHeading_games",
+    "PanelHeading_time",
+    "Cell_games",
+    "Cell_time",
+    "CellFilter_games",
+    "Billboard_billboard",
+    "RuneHeading_games",
+    "RuneCell_games",
+    "ButtonSet_wrapper",
+    "NavBar_navbar",
+    "TierListHeader_medium",
+    "ChampionSideBar_triple",
+  ];
+  // Adjust the element to compress the gaps caused by deleting nodes
+  const resizePanelPatternList = ["PanelLazy_panel"];
+  // toggle summoner skills
+  const clickElementPatternList = [
+    "SetSingle_togglespells",
+    "SetSingle_toggleitemset",
+  ];
+  const removeParentByContentList = [];
+  const highLightList = [
+    ["[class^=PanelHeading_title]", "Mythic"],
+    ["[class^=PanelHeading_title]", "Summoner Spells"],
+    ["[class^=PanelHeading_title]", "Starting Items"],
+    ["[class^=PanelHeading_title]", "Item"],
+    ["[class^=PanelHeading_title]", "Boots"],
+    ["[class^=PanelHeading_title]", "Popular Items"],
+    ["[class^=PanelHeading_title]", "Winning Items"],
+  ];
 
   const waitPageLoad = async () => {
     while (true) {
@@ -19,43 +59,15 @@
       const loadCheckDiv = [
         ...document.querySelectorAll("[class^=LargeRunePanel_wrapper]"),
       ];
-      // rune elements
+      // rune pickrate elements
       const runePickrateDivs = [
         ...document.querySelectorAll("[class^=RuneCell_pick__]"),
       ];
-      // some elements I don't like
-      const removePanelPatternList = [
-        "ChampionHeader_medium__",
-        "ChampionHeader_header__",
-        "Summary_full__",
-        "HLeaderboard_leaderboard",
-        "GraphLegend_wrapper",
-        "Graphs_medium3",
-        "Champion_mythic",
-        "PanelHeading_games",
-        "PanelHeading_time",
-        "Cell_games",
-        "Cell_time",
-        "CellFilter_games",
-        "Billboard_billboard",
-        "RuneHeading_games",
-        "RuneCell_games",
-        "ButtonSet_wrapper",
-        "NavBar_navbar",
-        "TierListHeader_medium",
-        "ChampionSideBar_triple",
-      ];
-      // Adjust the element to compress the gaps caused by deleting nodes
-      const resizePanelPatternList = ["PanelLazy_panel"];
-      // toggle summoner skills
-      const clickElementPatternList = ["SetSingle_togglespells"];
-
-      const removeParentByContentList = [];
-
       // Change background image to plain gray #111111
       const backgroundImagePanel = [
         ...document.querySelectorAll("[class^=Background_back]"),
       ];
+
       if (backgroundImagePanel.length > 0)
         backgroundImagePanel[0].style.backgroundImage =
           'url("https://i.imgur.com/cT5l4hu.png")';
@@ -83,19 +95,13 @@
           // Set borders with colors
           if (pickrateValue >= 40.0)
             // 40%+
-            div.style.border = "4px solid #ff9b00"; // Yellow border
+            div.style.border = `4px solid ${HighLightColor[0]}`; // Yellow border
           else if (pickrateValue >= 15.0)
             // 15-40%
-            div.style.border = "4px solid #0756fa"; // Dark blue border
+            div.style.border = `4px solid ${HighLightColor[1]}`; // Dark blue border
           else if (pickrateValue >= 5.0)
             // 5-15%
-            //div.style.border = "4px solid #b5caf7"; // Light blue border
-            div.style.border = "4px solid #AAAAAA"; // Gray border
-          //   else if (pickrateValue >= 1.0) {
-          //     // 1-5%
-          //     div.parentNode.children[1].style.visibility = "hidden"; // Hide winrate
-          //     div.parentNode.children[2].style.visibility = "hidden"; // Hide pickrate
-          //   }
+            div.style.border = `4px solid ${HighLightColor[2]}`; // Gray border
           else if (pickrateValue < 1.0)
             // <1%
             div.parentNode.style.visibility = "hidden"; // Hide all runes
@@ -132,7 +138,10 @@
       }
 
       removeUselessDiv();
-      highLightSummonerSkill();
+
+      for (let hightLightElement of highLightList) {
+        highLight(...hightLightElement);
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -207,43 +216,37 @@
     });
   }
 
-  function highLightSummonerSkill() {
-    let SummonerSkillPattern = "[class^=PanelHeading_title]";
-    let text = "Summoner Spells";
-    let div = elementWithTextIsLoaded(SummonerSkillPattern, text);
+  function highLight(Pattern, text) {
+    let div = elementWithTextIsLoaded(Pattern, text);
     if (div) {
-      let summonerSkillDivs = div.parentNode.nextSibling.firstChild;
-      let baseWinRate = parseFloat(
-        summonerSkillDivs.children[0].children[1].innerHTML
-      );
-      const divsArray = Array.from(summonerSkillDivs.childNodes);
+      let highLightParentDivs = div.parentNode.nextSibling.firstChild;
+      const divsArray = Array.from(highLightParentDivs.childNodes);
       let FilterAndSortedDivs = divsArray
-        .filter((SummonerSkill) => {
-          return (
-            parseFloat(SummonerSkill.children[1].innerHTML) > baseWinRate &&
-            parseFloat(SummonerSkill.children[2].innerHTML) > 5
-          );
+        .filter((highLightDiv) => {
+          return parseFloat(highLightDiv.children[2].innerHTML) > 1;
         })
         .sort(
           (a, b) =>
-            // balance the winrate and pick rate 
+            // balance the winrate and pick rate
             parseFloat(b.children[1].innerHTML) +
-            parseFloat(b.children[2].innerHTML) / 20 -
+            Math.log(parseFloat(b.children[2].innerHTML)) -
             parseFloat(a.children[1].innerHTML) -
-            parseFloat(a.children[2].innerHTML) / 20
+            Math.log(parseFloat(a.children[2].innerHTML))
         );
-      for (let i = 0; i < HighLightColor.length; i++) {
+      for (
+        let i = 0;
+        i < Math.min(HighLightColor.length, FilterAndSortedDivs.length);
+        i++
+      ) {
+        FilterAndSortedDivs[i].style.borderRadius = "2px";
         FilterAndSortedDivs[i].style.border = `2px solid ${HighLightColor[i]}`;
       }
-      // FilterAndSortedDivs.forEach((Div) => {
-      //   Div.style.border = "2px solid #ff9b00";
-      // });
     }
   }
   function elementWithTextIsLoaded(selectorPattern, text) {
     let divs = document.querySelectorAll(selectorPattern);
     for (let i = 0; i < divs.length; i++) {
-      if (divs[i].textContent.includes(text)) {
+      if (divs[i].textContent === text) {
         return divs[i];
       }
     }
