@@ -53,6 +53,7 @@
     ["[class^=PanelHeading_title]", "Winning Items"],
   ];
   const runeRowsPattern = "[class^=RuneRow_runerow]";
+  const runeStatsPattern = "[class^=RuneStatPanel_runetype]";
 
   const waitPageLoad = async () => {
     while (true) {
@@ -69,7 +70,7 @@
         ...document.querySelectorAll("[class^=Background_back]"),
       ];
 
-      const runeRows = [...document.querySelectorAll(runeRowsPattern)];
+      const runeRows = [...document.querySelectorAll(runeRowsPattern),...document.querySelectorAll(runeStatsPattern)];
 
       if (backgroundImagePanel.length > 0)
         backgroundImagePanel[0].style.backgroundImage =
