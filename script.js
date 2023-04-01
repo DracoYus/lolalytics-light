@@ -52,6 +52,7 @@
     ["[class^=PanelHeading_title]", "Popular Items"],
     ["[class^=PanelHeading_title]", "Winning Items"],
   ];
+  const runeRowsPattern = "[class^=RuneRow_runerow]";
 
   const waitPageLoad = async () => {
     while (true) {
@@ -67,6 +68,8 @@
       const backgroundImagePanel = [
         ...document.querySelectorAll("[class^=Background_back]"),
       ];
+
+      const runeRows = [...document.querySelectorAll(runeRowsPattern)];
 
       if (backgroundImagePanel.length > 0)
         backgroundImagePanel[0].style.backgroundImage =
@@ -84,29 +87,16 @@
         }
       }
 
-      // Tweak runes section
+      // hide runes that pick rate lower than 1%
       if (loadCheckDiv.length > 0) {
         for (const div of runePickrateDivs) {
           let pickrateValue = parseFloat(div.innerHTML);
-
-          // Set border radius
-          div.style.borderRadius = "5px";
-
-          // Set borders with colors
-          if (pickrateValue >= 40.0)
-            // 40%+
-            div.style.border = `4px solid ${HighLightColor[0]}`; // Yellow border
-          else if (pickrateValue >= 15.0)
-            // 15-40%
-            div.style.border = `4px solid ${HighLightColor[1]}`; // Dark blue border
-          else if (pickrateValue >= 5.0)
-            // 5-15%
-            div.style.border = `4px solid ${HighLightColor[2]}`; // Gray border
-          else if (pickrateValue < 1.0)
-            // <1%
-            div.parentNode.style.visibility = "hidden"; // Hide all runes
+          if (pickrateValue < 1.0) div.parentNode.style.visibility = "hidden"; // Hide all runes
         }
-        //break;
+      }
+
+      for (let runeRow of runeRows) {
+        highLightRune(runeRow);
       }
 
       for (const removePanelPattern of removePanelPatternList) {
@@ -240,9 +230,11 @@
       ) {
         FilterAndSortedDivs[i].style.borderRadius = "2px";
         FilterAndSortedDivs[i].style.border = `2px solid ${HighLightColor[i]}`;
+        FilterAndSortedDivs[i].style["box-sizing"] = "border-box";
       }
     }
   }
+
   function elementWithTextIsLoaded(selectorPattern, text) {
     let divs = document.querySelectorAll(selectorPattern);
     for (let i = 0; i < divs.length; i++) {
@@ -251,5 +243,49 @@
       }
     }
     return null;
+  }
+
+  function highLightRune(div) {
+    const divsArray = Array.from(div.children);
+    let FilterAndSortedDivs = divsArray
+      .filter((highLightDiv) => {
+        if (highLightDiv.children[2])
+          return parseFloat(highLightDiv.children[2].innerHTML) > 1;
+        else return false;
+      })
+      .sort(
+        (a, b) =>
+          // balance the winrate and pick rate
+          parseFloat(b.children[1].innerHTML) +
+          Math.log(parseFloat(b.children[2].innerHTML)) -
+          parseFloat(a.children[1].innerHTML) -
+          Math.log(parseFloat(a.children[2].innerHTML))
+      );
+    let FirstWinRate;
+    let FirstPickRate;
+    if (FilterAndSortedDivs[0]) {
+      FirstWinRate = parseFloat(
+        FilterAndSortedDivs[0].children[1].innerHTML
+      );
+      FirstPickRate = parseFloat(
+        FilterAndSortedDivs[0].children[2].innerHTML
+      );
+    }
+    for (
+      let i = 0;
+      i < Math.min(HighLightColor.length, FilterAndSortedDivs.length);
+      i++
+    ) {
+      if (
+        parseFloat(FilterAndSortedDivs[i].children[1].innerHTML) >=
+          FirstWinRate ||
+        parseFloat(FilterAndSortedDivs[i].children[2].innerHTML) >=
+          FirstPickRate
+      ) {
+        FilterAndSortedDivs[i].style.borderRadius = "2px";
+        FilterAndSortedDivs[i].style.border = `2px solid ${HighLightColor[i]}`;
+        FilterAndSortedDivs[i].style["box-sizing"] = "border-box";
+      }
+    }
   }
 })();
